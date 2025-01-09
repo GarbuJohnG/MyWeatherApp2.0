@@ -11,5 +11,5 @@ import Combine
 
 protocol WeatherServiceProtocol {
     func fetchWeather(for location: CLLocation) -> AnyPublisher<WeatherModel, Error>
-    func fetchForecast(for location: CLLocation) -> AnyPublisher<ForecastModel, Error>
+    func fetchForecast(for location: CLLocation) -> AnyPublisher<[DailyForecastItem], Error>
 }

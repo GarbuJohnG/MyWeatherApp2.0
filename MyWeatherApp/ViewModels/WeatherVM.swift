@@ -14,7 +14,7 @@ class WeatherVM: LocationManagerDelegate, ObservableObject {
     // MARK: - Properties
     
     @Published var weather: WeatherModel?
-    @Published var forecast: ForecastModel?
+    @Published var forecast: [DailyForecastItem]?
     @Published var toastError: String?
     
     private lazy var locationManager: LocationManager = {
@@ -29,6 +29,7 @@ class WeatherVM: LocationManagerDelegate, ObservableObject {
     init(weatherService: WeatherServiceProtocol) {
         self.weatherService = weatherService
         setupBindings()
+        loadOfflineData()
     }
     
     private func setupBindings() {
@@ -38,6 +39,17 @@ class WeatherVM: LocationManagerDelegate, ObservableObject {
                 print("New location: \(location.coordinate.latitude), \(location.coordinate.longitude)")
             }
             .store(in: &cancellables)
+    }
+    
+    // MARK: - Load Offline Content
+    
+    func loadOfflineData() {
+        if let offlineWeather = UserDefaultsManager.shared.fetchWeather() {
+            weather = offlineWeather
+        }
+        if let offlineForecast = UserDefaultsManager.shared.fetchForecast() {
+            forecast = offlineForecast
+        }
     }
     
     // MARK: - LocationManagerDelegate
@@ -58,11 +70,12 @@ class WeatherVM: LocationManagerDelegate, ObservableObject {
                 }
             }, receiveValue: { [weak self] weather in
                 self?.weather = weather
+                UserDefaultsManager.shared.saveWeather(weather)
             })
             .store(in: &cancellables)
     }
     
-    // MARK: - Get Current Location 5 Day Forecast
+    // MARK: - Get Current Location 5 Day Forecast (Returns forecast for every 3 hours)
     
     private func fetchForecast(for location: CLLocation) {
         weatherService.fetchForecast(for: location)
@@ -74,6 +87,7 @@ class WeatherVM: LocationManagerDelegate, ObservableObject {
                 }
             }, receiveValue: { [weak self] forecast in
                 self?.forecast = forecast
+                UserDefaultsManager.shared.saveForecast(forecast)
             })
             .store(in: &cancellables)
     }
