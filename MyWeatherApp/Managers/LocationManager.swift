@@ -18,8 +18,10 @@ protocol LocationManagerDelegate: AnyObject {
 
 final class LocationManager: NSObject, ObservableObject {
     
-    // Published variable for the current location
+    // MARK: - Published variable for the current location
+    
     @Published private(set) var currentLocation: CLLocation?
+    @Published private(set) var locationError: String?
     
     private let locationManager: CLLocationManager
     private let distanceFilter: CLLocationDistance
@@ -33,6 +35,7 @@ final class LocationManager: NSObject, ObservableObject {
         self.delegate = delegate
         super.init()
         configureLocationManager()
+        checkLocationAuthorization()
     }
     
     // MARK: - Private Methods
@@ -40,10 +43,10 @@ final class LocationManager: NSObject, ObservableObject {
     private func configureLocationManager() {
         locationManager.delegate = self
         locationManager.desiredAccuracy = kCLLocationAccuracyBest
-        locationManager.requestWhenInUseAuthorization()
         locationManager.distanceFilter = distanceFilter
-        locationManager.startUpdatingLocation()
     }
+    
+    // MARK: - Update only new location (> than 500m)
     
     private func shouldUpdateLocation(newLocation: CLLocation, oldLocation: CLLocation?) -> Bool {
         guard let oldLocation = oldLocation else {
@@ -52,11 +55,44 @@ final class LocationManager: NSObject, ObservableObject {
         return newLocation.distance(from: oldLocation) > distanceFilter
     }
     
+    // MARK: - Check Location Authorization
+    
+    private func checkLocationAuthorization() {
+        let authorizationStatus = locationManager.authorizationStatus
+        
+        switch authorizationStatus {
+        case .notDetermined:
+            locationManager.requestWhenInUseAuthorization()
+        case .restricted, .denied:
+            print("Location access is restricted or denied. Inform the user to enable it in settings.")
+        case .authorizedWhenInUse, .authorizedAlways:
+            locationManager.startUpdatingLocation()
+        @unknown default:
+            print("Unknown location authorization status.")
+        }
+    }
+    
 }
 
 // MARK: - CLLocationManagerDelegate
 
 extension LocationManager: CLLocationManagerDelegate {
+    
+    func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
+        switch status {
+        case .authorizedWhenInUse, .authorizedAlways:
+            locationManager.startUpdatingLocation() // Start location updates if authorized
+        case .restricted, .denied:
+            print("Location access was denied or restricted.")
+            locationError = "Location access was denied or restricted."
+        case .notDetermined:
+            print("Location access is not determined yet.")
+            locationError = "Location access is not determined yet."
+        @unknown default:
+            print("Unknown location authorization status.")
+            locationError = "Unknown location authorization status."
+        }
+    }
     
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         guard let newLocation = locations.last else { return }
@@ -70,5 +106,4 @@ extension LocationManager: CLLocationManagerDelegate {
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
         print("Failed to update location: \(error.localizedDescription)")
     }
-    
 }

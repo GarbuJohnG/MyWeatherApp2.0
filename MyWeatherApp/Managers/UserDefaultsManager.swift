@@ -41,7 +41,7 @@ final class UserDefaultsManager {
 
     // MARK: - Save Forecast Data
     
-    func saveForecast(_ forecast: [DailyForecastItem]) {
+    func saveForecast(_ forecast: ForecastModel) {
         do {
             let data = try JSONEncoder().encode(forecast)
             UserDefaults.standard.set(data, forKey: forecastKey)
@@ -52,10 +52,10 @@ final class UserDefaultsManager {
 
     // MARK: - Fetch Forecast Data
     
-    func fetchForecast() -> [DailyForecastItem]? {
+    func fetchForecast() -> ForecastModel? {
         guard let data = UserDefaults.standard.data(forKey: forecastKey) else { return nil }
         do {
-            return try JSONDecoder().decode([DailyForecastItem].self, from: data)
+            return try JSONDecoder().decode(ForecastModel.self, from: data)
         } catch {
             print("Failed to decode forecast data: \(error)")
             return nil

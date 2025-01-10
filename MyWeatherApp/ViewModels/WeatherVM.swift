@@ -14,7 +14,8 @@ class WeatherVM: LocationManagerDelegate, ObservableObject {
     // MARK: - Properties
     
     @Published var weather: WeatherModel?
-    @Published var forecast: [DailyForecastItem]?
+    @Published var forecast: ForecastModel?
+    @Published var fiveDayForecast: [DailyForecastItem]?
     @Published var toastError: String?
     
     private lazy var locationManager: LocationManager = {
@@ -22,7 +23,7 @@ class WeatherVM: LocationManagerDelegate, ObservableObject {
     }()
     
     private let weatherService: WeatherServiceProtocol
-    private var cancellables = Set<AnyCancellable>()
+    var cancellables = Set<AnyCancellable>()
     
     // MARK: - Initializer
     
@@ -37,6 +38,8 @@ class WeatherVM: LocationManagerDelegate, ObservableObject {
             .sink { [weak self] location in
                 guard let self = self, let location = location else { return }
                 print("New location: \(location.coordinate.latitude), \(location.coordinate.longitude)")
+                fetchWeather(for: location)
+                fetchForecast(for: location)
             }
             .store(in: &cancellables)
     }
@@ -49,7 +52,9 @@ class WeatherVM: LocationManagerDelegate, ObservableObject {
         }
         if let offlineForecast = UserDefaultsManager.shared.fetchForecast() {
             forecast = offlineForecast
+            fiveDayForecast = getMiddayWeather(from: offlineForecast)
         }
+        
     }
     
     // MARK: - LocationManagerDelegate
@@ -60,7 +65,7 @@ class WeatherVM: LocationManagerDelegate, ObservableObject {
     
     // MARK: - Get Current Location Weather
     
-    private func fetchWeather(for location: CLLocation) {
+    func fetchWeather(for location: CLLocation) {
         weatherService.fetchWeather(for: location)
             .receive(on: DispatchQueue.main)
             .sink(receiveCompletion: { [weak self] completion in
@@ -77,7 +82,7 @@ class WeatherVM: LocationManagerDelegate, ObservableObject {
     
     // MARK: - Get Current Location 5 Day Forecast (Returns forecast for every 3 hours)
     
-    private func fetchForecast(for location: CLLocation) {
+    func fetchForecast(for location: CLLocation) {
         weatherService.fetchForecast(for: location)
             .receive(on: DispatchQueue.main)
             .sink(receiveCompletion: { [weak self] completion in
@@ -88,8 +93,28 @@ class WeatherVM: LocationManagerDelegate, ObservableObject {
             }, receiveValue: { [weak self] forecast in
                 self?.forecast = forecast
                 UserDefaultsManager.shared.saveForecast(forecast)
+                if let fiveDayForecast = self?.getMiddayWeather(from: forecast) {
+                    self?.fiveDayForecast = fiveDayForecast
+                }
             })
             .store(in: &cancellables)
+    }
+    
+    // MARK: - Convert the 40 3 hour records to 5 days of weather at noon
+    
+    func getMiddayWeather(from forecastResponse: ForecastModel) -> [DailyForecastItem] {
+        
+        var middayWeather: [DailyForecastItem] = []
+        let middayHour = "12:00:00"
+        for forecastInfo in forecastResponse.list ?? [] {
+            if let forecastDate = forecastInfo.dtTxt, forecastDate.contains(middayHour) {
+                let main = forecastInfo.weather?.first?.main ?? "Unknown"
+                let description = forecastInfo.weather?.first?.description ?? "Unknown"
+                let temperature = forecastInfo.main?.temp ?? 0.0
+                middayWeather.append(DailyForecastItem(date: forecastDate, main: main, description: description, temperature: temperature))
+            }
+        }
+        return middayWeather
     }
     
 }

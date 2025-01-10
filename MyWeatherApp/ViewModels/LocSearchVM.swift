@@ -6,31 +6,35 @@
 //
 
 import Foundation
+import Combine
 
 class LocSearchVM: ObservableObject {
     
     @Published private(set) var locations: [OSMLocation]?
     @Published private(set) var toastError: String?
     
-    private let osmService = OpenStreetMapService()
+    private let osmService: OpenStreetMapServiceProtocol
+    private var cancellables = Set<AnyCancellable>()
+    
+    init(osmService: OpenStreetMapServiceProtocol) {
+        self.osmService = osmService
+    }
     
     // MARK: - Search for a Location Name
     
     func locationSearch(searchName: String) {
         
-        osmService.searchLocation(named: searchName) { [weak self] result in
-            switch result {
-            case .success(let locations):
-                for location in locations {
-                    print("Coordinates for \(location.display_name):")
-                    print("Latitude: \(location.lat), Longitude: \(location.lon)")
+        osmService.searchLocation(named: searchName)
+            .receive(on: DispatchQueue.main)
+            .sink(receiveCompletion: { [weak self] completion in
+                if case .failure(let error) = completion {
+                    print("Failed to fetch locations: \(error)")
+                    self?.toastError = "Failed to fetch locations: \(error)"
                 }
+            }, receiveValue: { [weak self] locations in
                 self?.locations = locations
-            case .failure(let error):
-                print("Error fetching location: \(error.localizedDescription)")
-                self?.toastError = "Error fetching location: \(error.localizedDescription)"
-            }
-        }
+            })
+            .store(in: &cancellables)
         
     }
     
