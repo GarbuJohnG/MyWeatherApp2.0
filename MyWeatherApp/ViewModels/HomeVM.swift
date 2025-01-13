@@ -15,6 +15,7 @@ class HomeVM: ObservableObject {
     @Published var minTempText: String = "--°"
     @Published var maxTempText: String = "--°"
     @Published var weatherConditionText: String = "Loading..."
+    @Published var dataLastFetchedText: String = ""
     
     private var weatherVM: WeatherVM
     private var appSettings: AppSettingsManager
@@ -61,9 +62,9 @@ class HomeVM: ObservableObject {
         let mintemp = weather.main?.tempMin ?? 0.0
         let maxtemp = weather.main?.tempMax ?? 0.0
         
-        temperatureText = "\(convertTemperature(temperature, to: units))° \(units == .metric ? "C" : "F")"
-        minTempText = "\(convertTemperature(mintemp, to: units))° \(units == .metric ? "C" : "F")"
-        maxTempText = "\(convertTemperature(maxtemp, to: units))° \(units == .metric ? "C" : "F")"
+        temperatureText = "\(convertTemperature(temperature, to: units).roundDouble())° \(units == .metric ? "C" : "F")"
+        minTempText = "\(convertTemperature(mintemp, to: units).roundDouble())° \(units == .metric ? "C" : "F")"
+        maxTempText = "\(convertTemperature(maxtemp, to: units).roundDouble())° \(units == .metric ? "C" : "F")"
         
         // MARK: - Update weather condition
         
@@ -71,19 +72,24 @@ class HomeVM: ObservableObject {
         let location = weather.name ?? "Unknown Location"
         weatherConditionText = "\(condition) in \(location)"
         
+        let interval = Date() - (weather.date ?? Date())
+        if (interval.minute ?? 0) > 10 {
+            dataLastFetchedText = "Weather last fetched: \(formatFromDate(date: (weather.date ?? Date())))"
+        }
+        
     }
     
     // MARK: - Convert temperature from Kelvin
     
-    func convertTemperature(_ temperature: Double, to units: AppUnits) -> Int {
+    func convertTemperature(_ temperature: Double, to units: AppUnits) -> Double {
         
         switch units {
         case .metric:
             // MARK: - Convert Kelvin to Celsius
-            return Int(temperature - 273.15)
+            return Double(temperature - 273.15)
         case .imperial:
             // MARK: - Convert Kelvin to Fahrenheit
-            return Int((temperature - 273.15) * 9/5 + 32)
+            return Double((temperature - 273.15) * 9/5 + 32)
         }
         
     }
@@ -93,8 +99,6 @@ class HomeVM: ObservableObject {
     func convertTemperatureToText(temp: Double) -> String {
         return "\(convertTemperature(temp, to: appSettings.appUnits))° \(appSettings.appUnits == .metric ? "C" : "F")"
     }
-    
-    // MARK: - Date Convert Function
     
     // MARK: - Date Convert Function
 
@@ -117,6 +121,18 @@ class HomeVM: ObservableObject {
         }
         
         return outputDateFormatter.string(from: date)
+        
+    }
+    
+    func formatFromDate(date: Date) -> String {
+        
+        let outputDateFormatter: DateFormatter = {
+            let formatter = DateFormatter()
+            formatter.dateFormat = "d MMM, yyyy 'at' HH:mm"
+            return formatter
+        }()
+        
+        return outputDateFormatter.string(from: Date())
         
     }
 

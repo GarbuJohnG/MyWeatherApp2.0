@@ -27,6 +27,8 @@ struct HomeView: View {
             
             cityWeatherView(condition, currentTheme)
             
+            offlineDataDateView(condition, currentTheme)
+            
             minMaxTempView(condition, currentTheme)
             
             weatherForecastView(condition, currentTheme)
@@ -60,6 +62,25 @@ struct HomeView: View {
             
         }
         .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.width * 8/9)
+    }
+    
+    // MARK: - Offline Data Date View
+    
+    func offlineDataDateView(_ condition: String, _ currentTheme: AppTheme) -> some View {
+        
+        return VStack {
+            if !homeVM.dataLastFetchedText.isEmpty {
+                Text(homeVM.dataLastFetchedText)
+                    .font(.system(size: 13, weight: .bold, design: .rounded))
+                    .foregroundStyle(.white.opacity(0.6))
+                    .padding()
+            }
+        }
+        .frame(width: UIScreen.main.bounds.width)
+        .background {
+            BGColorMapper.bgColor(for: condition, theme: currentTheme)
+        }
+        
     }
     
     // MARK: - Min Max Temperature View

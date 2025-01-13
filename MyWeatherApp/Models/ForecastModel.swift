@@ -11,6 +11,7 @@ import Foundation
 struct ForecastModel: Codable {
     let list: [ForecastList]?
     let city: City?
+    var date: Date?
 }
 
 // MARK: - City

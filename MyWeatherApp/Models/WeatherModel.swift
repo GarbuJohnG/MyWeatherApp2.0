@@ -13,6 +13,7 @@ struct WeatherModel: Codable {
     let main: MainTemps?
     let dt: Int?
     let name: String?
+    var date: Date?
 }
 
 // MARK: - Main

@@ -74,7 +74,9 @@ class WeatherVM: LocationManagerDelegate, ObservableObject {
                     self?.toastError = "Failed to fetch weather: \(error)"
                 }
             }, receiveValue: { [weak self] weather in
-                self?.weather = weather
+                var datedWeather = weather
+                datedWeather.date = Date()
+                self?.weather = datedWeather
                 UserDefaultsManager.shared.saveWeather(weather)
             })
             .store(in: &cancellables)
@@ -91,7 +93,9 @@ class WeatherVM: LocationManagerDelegate, ObservableObject {
                     self?.toastError = "Failed to fetch forecast: \(error)"
                 }
             }, receiveValue: { [weak self] forecast in
-                self?.forecast = forecast
+                var datedforecast = forecast
+                datedforecast.date = Date()
+                self?.forecast = datedforecast
                 UserDefaultsManager.shared.saveForecast(forecast)
                 if let fiveDayForecast = self?.getMiddayWeather(from: forecast) {
                     self?.fiveDayForecast = fiveDayForecast
