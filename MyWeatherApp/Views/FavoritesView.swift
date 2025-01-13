@@ -68,6 +68,7 @@ struct FavoritesView: View {
                             .padding(.top, 50)
                         
                     } else {
+                        
                         favCitiesWeatherView(condition, currentTheme)
                             .refreshable {
                                 fetchMultipleCityWeather()
@@ -75,6 +76,11 @@ struct FavoritesView: View {
                     }
                     
                     Spacer()
+                    
+                    if let allCitiesWeather = favLocations {
+                        viewAllBtnView(allCitiesWeather: allCitiesWeather)
+                            .padding(.bottom)
+                    }
                     
                     Rectangle()
                         .fill(BGColorMapper.bgColor(for: condition, theme: currentTheme))
@@ -118,8 +124,22 @@ struct FavoritesView: View {
                 }
                 
             }
+            
         }
     
+    }
+    
+    // MARK: - View All Button
+    
+    func viewAllBtnView(allCitiesWeather: [CityWeather]) -> some View {
+        return NavigationLink(destination: MapView(allCitiesWeather: allCitiesWeather)) {
+            
+            Text("View All on Map")
+                .font(.system(size: 16, weight: .bold, design: .rounded))
+                .foregroundStyle(.white)
+                .shadow(radius: 3)
+            
+        }
     }
     
     // MARK: - Favorite Cities Weather View
