@@ -11,34 +11,54 @@ struct ContentView: View {
     
     @EnvironmentObject var locationManager: LocationManager
     @EnvironmentObject var appSettings: AppSettingsManager
+    @EnvironmentObject var networkStatus: NetworkStatus
     @EnvironmentObject var weatherVM: WeatherVM
     
     @State var showLocationAlert: Bool = false
     
     var body: some View {
         
-        TabView {
+        ZStack {
             
-            // MARK: - Home Tab
+            TabView {
+                
+                // MARK: - Home Tab
+                
+                HomeView(weatherVM: weatherVM, appSettings: appSettings)
+                    .tabItem {
+                        Label("Home", systemImage: "house")
+                    }
+                
+                // MARK: - Maps Tab
+                
+                FavoritesView()
+                    .tabItem {
+                        Label("Favorites", systemImage: "star.fill")
+                    }
+                
+                // MARK: - Settings Tab
+                
+                SettingsView()
+                    .tabItem {
+                        Label("Settings", systemImage: "gear")
+                    }
+            }
             
-            HomeView(weatherVM: weatherVM, appSettings: appSettings)
-                .tabItem {
-                    Label("Home", systemImage: "house")
+            if !networkStatus.isConnected {
+                
+                withAnimation(.easeInOut) {
+                    VStack {
+                        
+                        ConnectivityBanner()
+                            .frame(width: UIScreen.main.bounds.width, height: 40)
+                        
+                        Spacer()
+                        
+                    }
                 }
-            
-            // MARK: - Maps Tab
-            
-            FavoritesView()
-                .tabItem {
-                    Label("Favorites", systemImage: "star.fill")
-                }
-            
-            // MARK: - Settings Tab
-            
-            SettingsView()
-                .tabItem {
-                    Label("Settings", systemImage: "gear")
-                }
+                
+            }
+    
         }
         .tint(Color.white)
         .onChange(of: locationManager.showError ?? false) { show in
