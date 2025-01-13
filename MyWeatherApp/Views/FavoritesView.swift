@@ -105,6 +105,9 @@ struct FavoritesView: View {
     func favCitiesWeatherView(_ condition: String, _ currentTheme: AppTheme) -> some View {
         return ScrollView {
             
+            Color.clear
+                .frame(height: 30)
+            
             if let locations = favLocations, locations.count > 0 {
                 
                 ForEach(locations, id: \.city) { location in
