@@ -32,6 +32,9 @@ struct HomeView: View {
             minMaxTempView(condition, currentTheme)
             
             weatherForecastView(condition, currentTheme)
+                .refreshable {
+                    weatherVM.refreshAllWeatherData()
+                }
             
         }
         .ignoresSafeArea()

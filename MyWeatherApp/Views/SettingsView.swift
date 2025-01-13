@@ -33,6 +33,7 @@ struct SettingsView: View {
                     .font(.system(size: 20, weight: .medium, design: .rounded))
                     .foregroundStyle(.white)
                     .padding(.top, 20)
+                    .shadow(radius: 3)
                 
                 Picker("Theme", selection: Binding(
                     get: { appSettings.appTheme },
@@ -56,6 +57,7 @@ struct SettingsView: View {
                     .font(.system(size: 20, weight: .medium, design: .rounded))
                     .foregroundStyle(.white)
                     .padding(.top, 20)
+                    .shadow(radius: 3)
                 
                 Picker("Units", selection: Binding(
                     get: { appSettings.appUnits },

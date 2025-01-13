@@ -13,6 +13,7 @@ struct FavoritesView: View {
     @EnvironmentObject var weatherVM: WeatherVM
     @EnvironmentObject var appSettings: AppSettingsManager
     
+    @State private var hasAppeared: Bool = false
     @State private var showSearch: Bool = false
     @State private var showLoading: Bool = false
     @State private var favLocations: [CityWeather]?
@@ -64,6 +65,9 @@ struct FavoritesView: View {
                 
             } else {
                 favCitiesWeatherView(condition, currentTheme)
+                    .refreshable {
+                        fetchMultipleCityWeather()
+                    }
             }
             
             Spacer()
@@ -94,9 +98,21 @@ struct FavoritesView: View {
                 }
             }
         }
-        .onAppear {
-            favLocations = UserDefaultsManager.shared.fetchCityWeather()
+        .onChange(of: weatherVM.cityMultipleFetched) { fetched in
+            if fetched {
+                favLocations?.removeAll()
+                for each in weatherVM.multipleCityWeather {
+                    favLocations?.append(CityWeather(city: each.name ?? "", weather: each))
+                }
+                UserDefaultsManager.shared.saveCityWeather(favLocations ?? [])
+            }
         }
+        .onAppear {
+            guard !hasAppeared else { return }
+            hasAppeared = true
+            fetchMultipleCityWeather()
+        }
+        
         
     }
     
@@ -166,6 +182,25 @@ struct FavoritesView: View {
         let coords = CLLocation(latitude: lat, longitude: long)
         
         weatherVM.fetchWeather(for: coords, specific: true)
+        
+    }
+    
+    private func fetchMultipleCityWeather() {
+        
+        favLocations = UserDefaultsManager.shared.fetchCityWeather()
+        
+        var locations: [CLLocation] = []
+        
+        for location in (favLocations ?? []) {
+            let lat = Double(location.weather.coord?.lat ?? 0.0)
+            let long = Double(location.weather.coord?.lon ?? 0.0)
+            let coords = CLLocation(latitude: lat, longitude: long)
+            locations.append(coords)
+        }
+        
+        if locations.count > 0 {
+            weatherVM.fetchWeatherForLocations(locations)
+        }
         
     }
     

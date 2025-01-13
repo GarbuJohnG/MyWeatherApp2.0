@@ -17,10 +17,14 @@ class WeatherVM: LocationManagerDelegate, ObservableObject {
     @Published var citySpecificWeather: WeatherModel?
     @Published var forecast: ForecastModel?
     @Published var fiveDayForecast: [DailyForecastItem]?
+    @Published var multipleCityWeather: [WeatherModel] = []
     @Published var toastError: String?
     
     @Published private(set) var isLoading: Bool = false
     @Published private(set) var citySpecificFetched: Bool = false
+    @Published private(set) var cityMultipleFetched: Bool = false
+    
+    private var currentLocation: CLLocation?
     
     private lazy var locationManager: LocationManager = {
         LocationManager(delegate: self)
@@ -42,10 +46,22 @@ class WeatherVM: LocationManagerDelegate, ObservableObject {
             .sink { [weak self] location in
                 guard let self = self, let location = location else { return }
                 print("New location: \(location.coordinate.latitude), \(location.coordinate.longitude)")
-                fetchWeather(for: location)
-                fetchForecast(for: location)
+                makeAllWeatherCalls(location: location)
             }
             .store(in: &cancellables)
+    }
+    
+    // MARK: - Make Network Calls
+    
+    func makeAllWeatherCalls(location: CLLocation) {
+        fetchWeather(for: location)
+        fetchForecast(for: location)
+    }
+    
+    func refreshAllWeatherData() {
+        if let location = currentLocation {
+            makeAllWeatherCalls(location: location)
+        }
     }
     
     // MARK: - Load Offline Content
@@ -65,6 +81,7 @@ class WeatherVM: LocationManagerDelegate, ObservableObject {
     
     func locationManagerDidUpdateLocation(_ location: CLLocation) {
         print("Delegate received new location: \(location.coordinate)")
+        currentLocation = location
     }
     
     // MARK: - Get Current Location Weather
@@ -95,6 +112,36 @@ class WeatherVM: LocationManagerDelegate, ObservableObject {
                 }
             })
             .store(in: &cancellables)
+    }
+    
+    // MARK: - Get Multiple Location Weather
+    
+    func fetchWeatherForLocations(_ locations: [CLLocation]) {
+        
+        isLoading = true
+        cityMultipleFetched = false
+        
+        guard !locations.isEmpty else { return }
+        
+        let weatherPublishers = locations.map { location in
+            weatherService.fetchWeather(for: location)
+        }
+        
+        Publishers.MergeMany(weatherPublishers)
+            .collect()
+            .receive(on: DispatchQueue.main)
+            .sink(receiveCompletion: { completion in
+                if case .failure(let error) = completion {
+                    print("Failed to fetch weather data: \(error)")
+                }
+            }, receiveValue: { [weak self] weatherModels in
+                self?.isLoading = false
+                self?.cityMultipleFetched = true
+                self?.multipleCityWeather = weatherModels
+                print("Fetched Weather Results: \(weatherModels)")
+            })
+            .store(in: &cancellables)
+        
     }
     
     // MARK: - Get Current Location 5 Day Forecast (Returns forecast for every 3 hours)
