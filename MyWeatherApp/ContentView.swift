@@ -31,7 +31,7 @@ struct ContentView: View {
                 
                 // MARK: - Maps Tab
                 
-                FavoritesView()
+                FavoritesView(weatherVM: weatherVM, appSettings: appSettings)
                     .tabItem {
                         Label("Favorites", systemImage: "star.fill")
                     }

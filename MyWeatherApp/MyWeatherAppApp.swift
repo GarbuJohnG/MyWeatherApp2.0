@@ -14,6 +14,7 @@ struct MyWeatherAppApp: App {
     @StateObject var locationManager = LocationManager()
     @StateObject var appSettingsManager = AppSettingsManager()
     @StateObject var weatherVM = WeatherVM(weatherService: WeatherService())
+    @StateObject var locSearchVM = LocSearchVM(osmService: OpenStreetMapService())
     
     var body: some Scene {
         WindowGroup {
@@ -22,6 +23,7 @@ struct MyWeatherAppApp: App {
                 .environmentObject(locationManager)
                 .environmentObject(appSettingsManager)
                 .environmentObject(weatherVM)
+                .environmentObject(locSearchVM)
         }
     }
     

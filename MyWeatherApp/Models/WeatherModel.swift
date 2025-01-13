@@ -31,3 +31,10 @@ struct MainTemps: Codable {
 struct Weather: Codable {
     let main, description: String?
 }
+
+// MARK: - City Weather
+
+struct CityWeather: Codable {
+    let city: String
+    let weather: WeatherModel
+}

@@ -14,9 +14,13 @@ class WeatherVM: LocationManagerDelegate, ObservableObject {
     // MARK: - Properties
     
     @Published var weather: WeatherModel?
+    @Published var citySpecificWeather: WeatherModel?
     @Published var forecast: ForecastModel?
     @Published var fiveDayForecast: [DailyForecastItem]?
     @Published var toastError: String?
+    
+    @Published private(set) var isLoading: Bool = false
+    @Published private(set) var citySpecificFetched: Bool = false
     
     private lazy var locationManager: LocationManager = {
         LocationManager(delegate: self)
@@ -65,19 +69,30 @@ class WeatherVM: LocationManagerDelegate, ObservableObject {
     
     // MARK: - Get Current Location Weather
     
-    func fetchWeather(for location: CLLocation) {
+    func fetchWeather(for location: CLLocation, specific: Bool? = false) {
+        
+        isLoading = true
+        citySpecificFetched = false
+        
         weatherService.fetchWeather(for: location)
             .receive(on: DispatchQueue.main)
             .sink(receiveCompletion: { [weak self] completion in
                 if case .failure(let error) = completion {
                     print("Failed to fetch weather: \(error)")
                     self?.toastError = "Failed to fetch weather: \(error)"
+                    self?.isLoading = false
                 }
             }, receiveValue: { [weak self] weather in
-                var datedWeather = weather
-                datedWeather.date = Date()
-                self?.weather = datedWeather
-                UserDefaultsManager.shared.saveWeather(weather)
+                self?.isLoading = false
+                if specific! {
+                    self?.citySpecificWeather = weather
+                    self?.citySpecificFetched = true
+                } else {
+                    var datedWeather = weather
+                    datedWeather.date = Date()
+                    self?.weather = datedWeather
+                    UserDefaultsManager.shared.saveWeather(weather)
+                }
             })
             .store(in: &cancellables)
     }
@@ -85,14 +100,19 @@ class WeatherVM: LocationManagerDelegate, ObservableObject {
     // MARK: - Get Current Location 5 Day Forecast (Returns forecast for every 3 hours)
     
     func fetchForecast(for location: CLLocation) {
+        
+        isLoading = true
+        
         weatherService.fetchForecast(for: location)
             .receive(on: DispatchQueue.main)
             .sink(receiveCompletion: { [weak self] completion in
                 if case .failure(let error) = completion {
                     print("Failed to fetch forecast: \(error)")
                     self?.toastError = "Failed to fetch forecast: \(error)"
+                    self?.isLoading = false
                 }
             }, receiveValue: { [weak self] forecast in
+                self?.isLoading = false
                 var datedforecast = forecast
                 datedforecast.date = Date()
                 self?.forecast = datedforecast

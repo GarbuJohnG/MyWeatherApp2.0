@@ -8,7 +8,7 @@
 import Foundation
 import Combine
 
-class OpenStreetMapService {
+class OpenStreetMapService: OpenStreetMapServiceProtocol {
     
     // MARK: - Search Location Name for Coordinates
     

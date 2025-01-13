@@ -97,7 +97,7 @@ class HomeVM: ObservableObject {
     // MARK: - Convert temperature Function
     
     func convertTemperatureToText(temp: Double) -> String {
-        return "\(convertTemperature(temp, to: appSettings.appUnits))° \(appSettings.appUnits == .metric ? "C" : "F")"
+        return "\(convertTemperature(temp, to: appSettings.appUnits).roundDouble())° \(appSettings.appUnits == .metric ? "C" : "F")"
     }
     
     // MARK: - Date Convert Function
