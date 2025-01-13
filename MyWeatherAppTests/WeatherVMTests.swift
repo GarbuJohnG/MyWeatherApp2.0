@@ -31,9 +31,13 @@ final class WeatherVMTests: XCTestCase {
             if shouldFail {
                 return Fail(error: URLError(.badServerResponse)).eraseToAnyPublisher()
             }
-            return Just(mockForecast!)
-                .setFailureType(to: Error.self)
-                .eraseToAnyPublisher()
+            if let mockForecast = mockForecast {
+                return Just(mockForecast)
+                    .setFailureType(to: Error.self)
+                    .eraseToAnyPublisher()
+            } else {
+                return Fail(error: URLError(.badServerResponse)).eraseToAnyPublisher()
+            }
         }
     }
     
@@ -125,6 +129,52 @@ final class WeatherVMTests: XCTestCase {
         
         wait(for: [expectation], timeout: 2.0)
     }
+    
+    func testFetchMultipleLocationsWeatherSuccess() throws {
+        // Arrange
+        let expectation = XCTestExpectation(description: "Fetch Weather for Multiple Locations Success")
+        expectation.expectedFulfillmentCount = 5 // Expect 5 locations to succeed
+
+        let mockWeather = WeatherModel(
+            weather: [Weather(main: "Rain", description: "Light Rain")],
+            main: MainTemps(temp: 15.0, tempMin: 14.0, tempMax: 16.0),
+            dt: 1234567890,
+            name: "TestCity"
+        )
+        
+        let locations = [
+            CLLocation(latitude: -1.1054, longitude: 37.0126),
+            CLLocation(latitude: -1.2863, longitude: 36.8172),
+            CLLocation(latitude: -0.7171, longitude: 36.4310),
+            CLLocation(latitude: -1.2543, longitude: 36.6816),
+            CLLocation(latitude: -4.0437, longitude: 39.6588)
+        ]
+
+        weatherService.mockWeather = mockWeather
+
+        // Act
+        viewModel.fetchWeatherForLocations(locations)
+
+        // Assert multiple
+        let expectations = locations.map { _ in XCTestExpectation(description: "Fetch Weather for a Location") }
+
+        for (index, location) in locations.enumerated() {
+            weatherService.fetchWeather(for: location)
+                .sink(receiveCompletion: { completion in
+                    if case .failure(let error) = completion {
+                        XCTFail("Fetch failed for location \(index): \(error)")
+                    }
+                }, receiveValue: { weather in
+                    XCTAssertEqual(weather.name, "TestCity")
+                    expectations[index].fulfill()
+                })
+                .store(in: &cancellables)
+        }
+
+        wait(for: expectations, timeout: 20.0)
+        
+    }
+
     
     // MARK: - Test for Fetch Weather Failure
     

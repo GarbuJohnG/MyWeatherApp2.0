@@ -9,6 +9,7 @@ import Foundation
 
 // MARK: - WeatherModel
 struct WeatherModel: Codable {
+    let coord: Coords?
     let weather: [Weather]?
     let main: MainTemps?
     let dt: Int?
@@ -25,6 +26,11 @@ struct MainTemps: Codable {
         case tempMin = "temp_min"
         case tempMax = "temp_max"
     }
+}
+
+// MARK: - Coords
+struct Coords: Codable {
+    let lat, lon: Double
 }
 
 // MARK: - Weather
