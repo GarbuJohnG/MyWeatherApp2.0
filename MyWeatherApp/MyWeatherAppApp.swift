@@ -12,12 +12,14 @@ struct MyWeatherAppApp: App {
     
     @StateObject var locationManager = LocationManager()
     @StateObject var appSettingsManager = AppSettingsManager()
+    @StateObject var weatherVM = WeatherVM(weatherService: WeatherService())
     
     var body: some Scene {
         WindowGroup {
             ContentView()
                 .environmentObject(locationManager)
                 .environmentObject(appSettingsManager)
+                .environmentObject(weatherVM)
         }
     }
     

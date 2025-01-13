@@ -5,7 +5,7 @@
 //  Created by John Gachuhi on 10/01/2025.
 //
 
-import SwiftUI
+import Foundation
 
 class HomeVM: ObservableObject {
     
@@ -73,7 +73,9 @@ class HomeVM: ObservableObject {
         
     }
     
-    private func convertTemperature(_ temperature: Double, to units: AppUnits) -> Int {
+    // MARK: - Convert temperature from Kelvin
+    
+    func convertTemperature(_ temperature: Double, to units: AppUnits) -> Int {
         
         switch units {
         case .metric:
@@ -85,5 +87,38 @@ class HomeVM: ObservableObject {
         }
         
     }
+    
+    // MARK: - Convert temperature Function
+    
+    func convertTemperatureToText(temp: Double) -> String {
+        return "\(convertTemperature(temp, to: appSettings.appUnits))° \(appSettings.appUnits == .metric ? "C" : "F")"
+    }
+    
+    // MARK: - Date Convert Function
+    
+    // MARK: - Date Convert Function
 
+    func formatDate(dateStr: String) -> String {
+        
+        let inputDateFormatter: DateFormatter = {
+            let formatter = DateFormatter()
+            formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
+            return formatter
+        }()
+        
+        let outputDateFormatter: DateFormatter = {
+            let formatter = DateFormatter()
+            formatter.dateFormat = "d MMM, yyyy"
+            return formatter
+        }()
+        
+        guard let date = inputDateFormatter.date(from: dateStr) else {
+            return dateStr
+        }
+        
+        return outputDateFormatter.string(from: date)
+        
+    }
+
+    
 }

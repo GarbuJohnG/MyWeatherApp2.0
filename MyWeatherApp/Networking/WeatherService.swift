@@ -16,7 +16,11 @@ final class WeatherService: WeatherServiceProtocol {
     
     func fetchWeather(for location: CLLocation) -> AnyPublisher<WeatherModel, any Error> {
     
-        let urlStr = Constants.URLs.baseUrl + Constants.Endpoints.weather + "?lat=\(location.coordinate.latitude)&lon=\(location.coordinate.longitude)"
+        let urlStr = Constants.URLs.baseUrl +
+        Constants.Endpoints.weather +
+        "?lat=\(location.coordinate.latitude)&lon=\(location.coordinate.longitude)" +
+        "&appid=\(Constants.Keys.openWeatherApiKey)"
+        
         return NetworkManager.shared.fetchData(urlStr: urlStr, responseType: WeatherModel.self)
         
     }
@@ -25,7 +29,11 @@ final class WeatherService: WeatherServiceProtocol {
     
     func fetchForecast(for location: CLLocation) -> AnyPublisher<ForecastModel, any Error> {
         
-        let urlStr = Constants.URLs.baseUrl + Constants.Endpoints.forecast + "?lat=\(location.coordinate.latitude)&lon=\(location.coordinate.longitude)"
+        let urlStr = Constants.URLs.baseUrl +
+        Constants.Endpoints.forecast +
+        "?lat=\(location.coordinate.latitude)&lon=\(location.coordinate.longitude)" +
+        "&appid=\(Constants.Keys.openWeatherApiKey)"
+        
         return NetworkManager.shared.fetchData(urlStr: urlStr, responseType: ForecastModel.self)
         
     }

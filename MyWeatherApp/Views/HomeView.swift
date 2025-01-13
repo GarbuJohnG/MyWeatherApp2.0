@@ -25,90 +25,113 @@ struct HomeView: View {
             let condition = weatherVM.weather?.weather?.first?.main ?? ""
             let currentTheme = appSettings.appTheme
             
-            ZStack {
+            cityWeatherView(condition, currentTheme)
+            
+            minMaxTempView(condition, currentTheme)
+            
+            weatherForecastView(condition, currentTheme)
+            
+        }
+        .ignoresSafeArea()
+        
+    }
+    
+    // MARK: - Top Weather View
+    
+    func cityWeatherView(_ condition: String, _ currentTheme: AppTheme) -> some View {
+        return ZStack {
+            
+            WeatherImageMapper.image(for: condition, theme: currentTheme)
+                .resizable()
+            
+            VStack {
                 
-                WeatherImageMapper.image(for: condition, theme: currentTheme)
-                    .resizable()
+                Text(homeVM.temperatureText)
+                    .font(.system(size: 50, weight: .bold, design: .rounded))
+                    .foregroundStyle(.white)
+                    .shadow(radius: 3)
                 
-                VStack {
-                    
-                    Text(homeVM.temperatureText)
-                        .font(.system(size: 50, weight: .bold, design: .rounded))
-                        .foregroundStyle(.white)
-                        .shadow(radius: 3)
-                    
-                    Text(homeVM.weatherConditionText)
-                        .font(.system(size: 20, weight: .bold, design: .rounded))
-                        .foregroundStyle(.white)
-                        .shadow(radius: 3)
-                    
-                }
+                Text(homeVM.weatherConditionText)
+                    .font(.system(size: 20, weight: .bold, design: .rounded))
+                    .foregroundStyle(.white)
+                    .shadow(radius: 3)
                 
             }
-            .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.width * 8/9)
             
-            HStack {
+        }
+        .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.width * 8/9)
+    }
+    
+    // MARK: - Min Max Temperature View
+    
+    func minMaxTempView(_ condition: String, _ currentTheme: AppTheme) -> some View {
+        return HStack {
+            
+            VStack {
                 
-                VStack {
-                    
-                    Text("Min Temp")
-                        .font(.system(size: 16, weight: .medium, design: .rounded))
-                        .foregroundStyle(.white)
-                        .shadow(radius: 3)
-                    
-                    Text(homeVM.minTempText)
-                        .font(.system(size: 16, weight: .medium, design: .rounded))
-                        .foregroundStyle(.white)
-                        .shadow(radius: 3)
-                    
-                }
+                Text("Min Temp")
+                    .font(.system(size: 16, weight: .medium, design: .rounded))
+                    .foregroundStyle(.white)
+                    .shadow(radius: 3)
                 
-                Spacer()
-                
-                VStack {
-                    
-                    Text("Max Temp")
-                        .font(.system(size: 16, weight: .medium, design: .rounded))
-                        .foregroundStyle(.white)
-                        .shadow(radius: 3)
-                    
-                    Text(homeVM.maxTempText)
-                        .font(.system(size: 16, weight: .medium, design: .rounded))
-                        .foregroundStyle(.white)
-                        .shadow(radius: 3)
-                    
-                }
+                Text(homeVM.minTempText)
+                    .font(.system(size: 16, weight: .medium, design: .rounded))
+                    .foregroundStyle(.white)
+                    .shadow(radius: 3)
                 
             }
-            .padding(.horizontal, 30)
-            .frame(width: UIScreen.main.bounds.width, height: 50)
-            .background {
-                BGColorMapper.bgColor(for: condition, theme: currentTheme)
+            
+            Spacer()
+            
+            VStack {
+                
+                Text("Max Temp")
+                    .font(.system(size: 16, weight: .medium, design: .rounded))
+                    .foregroundStyle(.white)
+                    .shadow(radius: 3)
+                
+                Text(homeVM.maxTempText)
+                    .font(.system(size: 16, weight: .medium, design: .rounded))
+                    .foregroundStyle(.white)
+                    .shadow(radius: 3)
+                
             }
             
+        }
+        .padding(.horizontal, 30)
+        .frame(width: UIScreen.main.bounds.width, height: 50)
+        .background {
+            BGColorMapper.bgColor(for: condition, theme: currentTheme)
+        }
+    }
+    
+    // MARK: - Weather Forecast View
+    
+    func weatherForecastView(_ condition: String, _ currentTheme: AppTheme) -> some View {
+        return ScrollView {
             
-            ScrollView {
+            Color.clear
+                .frame(height: 30)
+            
+            if let forecasts = weatherVM.fiveDayForecast {
                 
-                Color.clear
-                    .frame(height: 30)
-                
-                ForEach(0..<5) { _ in
+                ForEach(forecasts) { forecast in
                     
                     HStack {
                         
-                        Text("--")
+                        Text(formatDate(dateStr: forecast.date))
                             .font(.system(size: 16, weight: .medium, design: .rounded))
                             .foregroundStyle(.white)
                             .shadow(radius: 3)
                         
                         Spacer()
                         
-                        WeatherIconMapper.icon(for: "Clear")
+                        WeatherIconMapper.icon(for: forecast.main)
                             .foregroundStyle(Color.white)
                         
                         Spacer()
                         
-                        Text("--")
+                        Text(formatTemperature(temperature: forecast.temperature))
                             .font(.system(size: 16, weight: .medium, design: .rounded))
                             .foregroundStyle(.white)
                             .shadow(radius: 3)
@@ -118,16 +141,21 @@ struct HomeView: View {
                     .frame(width: UIScreen.main.bounds.width, height: 50)
                     
                 }
-                
-            }
-            .frame(width: UIScreen.main.bounds.width)
-            .background {
-                BGColorMapper.bgColor(for: condition, theme: currentTheme)
             }
             
         }
-        .ignoresSafeArea()
-        
+        .frame(width: UIScreen.main.bounds.width)
+        .background {
+            BGColorMapper.bgColor(for: condition, theme: currentTheme)
+        }
+    }
+    
+    private func formatTemperature(temperature: Double) -> String {
+        return homeVM.convertTemperatureToText(temp: temperature)
+    }
+    
+    private func formatDate(dateStr: String) -> String {
+        return homeVM.formatDate(dateStr: dateStr)
     }
     
 }

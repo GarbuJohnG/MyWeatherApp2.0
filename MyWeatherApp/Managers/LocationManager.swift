@@ -22,6 +22,7 @@ final class LocationManager: NSObject, ObservableObject {
     
     @Published private(set) var currentLocation: CLLocation?
     @Published private(set) var locationError: String?
+    @Published var showError: Bool?
     
     private let locationManager: CLLocationManager
     private let distanceFilter: CLLocationDistance
@@ -78,19 +79,22 @@ final class LocationManager: NSObject, ObservableObject {
 
 extension LocationManager: CLLocationManagerDelegate {
     
+    // MARK: - Detect any changes to CLLocation Authorization
+    
     func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
         switch status {
         case .authorizedWhenInUse, .authorizedAlways:
-            locationManager.startUpdatingLocation() // Start location updates if authorized
+            locationManager.startUpdatingLocation()
         case .restricted, .denied:
             print("Location access was denied or restricted.")
-            locationError = "Location access was denied or restricted."
+            locationError = "LLocation access was denied or restricted."
+            showError = true
         case .notDetermined:
-            print("Location access is not determined yet.")
-            locationError = "Location access is not determined yet."
+            locationManager.requestWhenInUseAuthorization()
         @unknown default:
             print("Unknown location authorization status.")
             locationError = "Unknown location authorization status."
+            showError = true
         }
     }
     

@@ -23,7 +23,7 @@ enum AppTheme: String {
     case sea = "SEA"
 }
 
-// MARK: - AppThemeManager
+// MARK: - AppSettingsManager
 
 class AppSettingsManager: ObservableObject {
     
@@ -34,8 +34,8 @@ class AppSettingsManager: ObservableObject {
     
     // MARK: - Published Properties
     
-    @Published private(set) var appTheme: AppTheme
-    @Published private(set) var appUnits: AppUnits
+    @Published private(set) var appTheme: AppTheme = .forest
+    @Published private(set) var appUnits: AppUnits = .metric
     
     private var cancellables = Set<AnyCancellable>()
     
@@ -43,36 +43,34 @@ class AppSettingsManager: ObservableObject {
     
     init() {
         
-        self.appTheme = .forest
-        self.appUnits = .metric
+        setupPublishedVars()
+        setupBindings()
         
+    }
+    
+    // MARK: - Private Methods
+    
+    private func setupPublishedVars() {
+        
+        self.appTheme = AppTheme(rawValue: storedAppTheme) ?? .forest
+        self.appUnits = AppUnits(rawValue: storedAppUnits) ?? .metric
+        
+    }
+    
+    private func setupBindings() {
         $appTheme
             .map { $0.rawValue }
             .sink { [weak self] newValue in
-                guard let self = self else { return }
-                self.storedAppTheme = newValue
+                self?.storedAppTheme = newValue
             }
             .store(in: &cancellables)
         
         $appUnits
             .map { $0.rawValue }
             .sink { [weak self] newValue in
-                guard let self = self else { return }
-                self.storedAppUnits = newValue
+                self?.storedAppUnits = newValue
             }
             .store(in: &cancellables)
-        
-        setSavedValues()
-        
-    }
-    
-    private func setSavedValues() {
-        
-        let initialTheme = AppTheme(rawValue: storedAppTheme) ?? .forest
-        let initialUnits = AppUnits(rawValue: storedAppUnits) ?? .metric
-        self.appTheme = initialTheme
-        self.appUnits = initialUnits
-        
     }
     
     // MARK: - Methods

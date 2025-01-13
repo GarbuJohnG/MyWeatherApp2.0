@@ -9,8 +9,11 @@ import SwiftUI
 
 struct ContentView: View {
     
+    @EnvironmentObject var locationManager: LocationManager
     @EnvironmentObject var appSettings: AppSettingsManager
-    @StateObject private var weatherVM = WeatherVM(weatherService: WeatherService())
+    @EnvironmentObject var weatherVM: WeatherVM
+    
+    @State var showLocationAlert: Bool = false
     
     var body: some View {
         
@@ -25,9 +28,9 @@ struct ContentView: View {
             
             // MARK: - Maps Tab
             
-            MapView()
+            FavoritesView()
                 .tabItem {
-                    Label("Maps", systemImage: "map")
+                    Label("Favorites", systemImage: "star.fill")
                 }
             
             // MARK: - Settings Tab
@@ -38,8 +41,28 @@ struct ContentView: View {
                 }
         }
         .tint(Color.white)
-        .environmentObject(weatherVM)
+        .onChange(of: locationManager.showError ?? false) { show in
+            if show {
+                showLocationAlert = true
+            }
+        }
+        .alert("Location Error", isPresented: $showLocationAlert) {
+            Button("Settings", role: .destructive) {
+                openAppSettings()
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text(locationManager.locationError ?? "")
+        }
         
+    }
+    
+    private func openAppSettings() {
+        if let appSettingsURL = URL(string: UIApplication.openSettingsURLString) {
+            if UIApplication.shared.canOpenURL(appSettingsURL) {
+                UIApplication.shared.open(appSettingsURL)
+            }
+        }
     }
     
     

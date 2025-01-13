@@ -8,12 +8,6 @@
 import Foundation
 import Combine
 
-struct OSMLocation: Codable {
-    let lat: String
-    let lon: String
-    let display_name: String
-}
-
 class OpenStreetMapService {
     
     // MARK: - Search Location Name for Coordinates

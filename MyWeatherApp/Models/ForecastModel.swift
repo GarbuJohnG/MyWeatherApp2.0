@@ -32,7 +32,8 @@ struct ForecastList: Codable {
 }
 
 // MARK: - DailyForecastItem
-struct DailyForecastItem: Codable {
+struct DailyForecastItem: Identifiable {
+    let id = UUID()
     let date, main, description: String
     let temperature: Double
 }

@@ -1,18 +1,16 @@
 //
-//  MapView.swift
+//  FavoritesView.swift
 //  MyWeatherApp
 //
-//  Created by John Gachuhi on 10/01/2025.
+//  Created by John Gachuhi on 12/01/2025.
 //
 
 import SwiftUI
 
-struct MapView: View {
+struct FavoritesView: View {
     
     @EnvironmentObject var weatherVM: WeatherVM
     @EnvironmentObject var appSettings: AppSettingsManager
-    
-    @StateObject var mapVM = MapViewVM()
     
     var body: some View {
         
@@ -21,8 +19,23 @@ struct MapView: View {
         
         VStack(spacing: 0) {
             
-            WrapperView(view: mapVM.mapView)
-                .ignoresSafeArea(edges: .top)
+            VStack{
+                
+                HStack {
+                    
+                    Text("Favorites")
+                        .font(.system(size: 40, weight: .bold, design: .rounded))
+                        .foregroundStyle(.white)
+                        .shadow(radius: 3)
+                    
+                    Spacer()
+                    
+                }
+                .padding([.leading,.top], 30)
+                
+            }
+            
+            Spacer()
             
             Rectangle()
                 .fill(BGColorMapper.bgColor(for: condition, theme: currentTheme))
@@ -32,11 +45,12 @@ struct MapView: View {
         }
         .background {
             BGColorMapper.bgColor(for: condition, theme: currentTheme)
+                .ignoresSafeArea()
         }
     }
     
 }
 
 //#Preview {
-//    MapView()
+//    FavoritesView()
 //}
