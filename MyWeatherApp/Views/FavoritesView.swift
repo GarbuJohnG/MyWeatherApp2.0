@@ -29,91 +29,97 @@ struct FavoritesView: View {
         let condition = weatherVM.weather?.weather?.first?.main ?? ""
         let currentTheme = appSettings.appTheme
         
-        VStack(spacing: 0) {
+        NavigationView {
             
-            VStack{
+            VStack {
                 
-                HStack {
+                VStack(spacing: 0) {
                     
-                    Text("Favorites")
-                        .font(.system(size: 40, weight: .bold, design: .rounded))
-                        .foregroundStyle(.white)
-                        .shadow(radius: 3)
-                    
-                    Button {
-                        showSearch.toggle()
-                    } label: {
-                        Text("Add +")
-                            .font(.system(size: 16, weight: .bold, design: .rounded))
+                    VStack{
+                        
+                        HStack {
+                            
+                            Text("Favorites")
+                                .font(.system(size: 40, weight: .bold, design: .rounded))
+                                .foregroundStyle(.white)
+                                .shadow(radius: 3)
+                            
+                            Button {
+                                showSearch.toggle()
+                            } label: {
+                                Text("Add +")
+                                    .font(.system(size: 16, weight: .bold, design: .rounded))
+                            }
+                            .disabled(showLoading)
+                            .frame(maxWidth: .infinity, alignment: .trailing)
+                            .padding(.trailing)
+                            
+                            Spacer()
+                            
+                        }
+                        .padding([.leading,.top], 30)
+                        
                     }
-                    .disabled(showLoading)
-                    .frame(maxWidth: .infinity, alignment: .trailing)
-                    .padding(.trailing)
+                    
+                    if showLoading {
+                        
+                        ProgressView()
+                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                            .padding(.top, 50)
+                        
+                    } else {
+                        favCitiesWeatherView(condition, currentTheme)
+                            .refreshable {
+                                fetchMultipleCityWeather()
+                            }
+                    }
                     
                     Spacer()
                     
+                    Rectangle()
+                        .fill(BGColorMapper.bgColor(for: condition, theme: currentTheme))
+                        .frame(width: UIScreen.main.bounds.width, height: 100)
+                        .padding(.bottom, -100)
+                    
                 }
-                .padding([.leading,.top], 30)
-                
-            }
-            
-            if showLoading {
-                
-                ProgressView()
-                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                    .padding(.top, 50)
-                
-            } else {
-                favCitiesWeatherView(condition, currentTheme)
-                    .refreshable {
-                        fetchMultipleCityWeather()
+                .background {
+                    BGColorMapper.bgColor(for: condition, theme: currentTheme)
+                        .ignoresSafeArea()
+                }
+                .fullScreenCover(isPresented: $showSearch) {
+                    PopupSearchView(isPresented: $showSearch, selectedAction: { location in
+                        processLocation(location: location)
+                    })
+                }
+                .onChange(of: weatherVM.isLoading) { loading in
+                    showLoading = loading
+                }
+                .onChange(of: weatherVM.citySpecificFetched) { fetched in
+                    if fetched {
+                        if let cityWeather = weatherVM.citySpecificWeather {
+                            favLocations?.append(CityWeather(city: cityWeather.name ?? "", weather: cityWeather))
+                            UserDefaultsManager.shared.saveCityWeather(favLocations ?? [])
+                        }
                     }
-            }
-            
-            Spacer()
-            
-            Rectangle()
-                .fill(BGColorMapper.bgColor(for: condition, theme: currentTheme))
-                .frame(width: UIScreen.main.bounds.width, height: 100)
-                .padding(.bottom, -100)
-            
-        }
-        .background {
-            BGColorMapper.bgColor(for: condition, theme: currentTheme)
-                .ignoresSafeArea()
-        }
-        .fullScreenCover(isPresented: $showSearch) {
-            PopupSearchView(isPresented: $showSearch, selectedAction: { location in
-                processLocation(location: location)
-            })
-        }
-        .onChange(of: weatherVM.isLoading) { loading in
-            showLoading = loading
-        }
-        .onChange(of: weatherVM.citySpecificFetched) { fetched in
-            if fetched {
-                if let cityWeather = weatherVM.citySpecificWeather {
-                    favLocations?.append(CityWeather(city: cityWeather.name ?? "", weather: cityWeather))
-                    UserDefaultsManager.shared.saveCityWeather(favLocations ?? [])
                 }
-            }
-        }
-        .onChange(of: weatherVM.cityMultipleFetched) { fetched in
-            if fetched {
-                favLocations?.removeAll()
-                for each in weatherVM.multipleCityWeather {
-                    favLocations?.append(CityWeather(city: each.name ?? "", weather: each))
+                .onChange(of: weatherVM.cityMultipleFetched) { fetched in
+                    if fetched {
+                        favLocations?.removeAll()
+                        for each in weatherVM.multipleCityWeather {
+                            favLocations?.append(CityWeather(city: each.name ?? "", weather: each))
+                        }
+                        UserDefaultsManager.shared.saveCityWeather(favLocations ?? [])
+                    }
                 }
-                UserDefaultsManager.shared.saveCityWeather(favLocations ?? [])
+                .onAppear {
+                    guard !hasAppeared else { return }
+                    hasAppeared = true
+                    fetchMultipleCityWeather()
+                }
+                
             }
         }
-        .onAppear {
-            guard !hasAppeared else { return }
-            hasAppeared = true
-            fetchMultipleCityWeather()
-        }
-        
-        
+    
     }
     
     // MARK: - Favorite Cities Weather View
@@ -128,31 +134,35 @@ struct FavoritesView: View {
                 
                 ForEach(locations, id: \.city) { location in
                     
-                    HStack {
+                    NavigationLink(destination: MapView(cityWeather: location)) {
                         
-                        Text(location.city)
-                            .font(.system(size: 16, weight: .medium, design: .rounded))
-                            .foregroundStyle(.white)
-                            .padding(.leading, 10)
-                        
-                        Spacer()
-                        
-                        WeatherIconMapper.icon(for: location.weather.weather?.first?.main ?? "")
-                            .foregroundStyle(Color.white)
-                        
-                        Spacer()
-                        
-                        Text(formatTemperature(temperature: location.weather.main?.temp ?? 0.0))
-                            .font(.system(size: 16, weight: .medium, design: .rounded))
-                            .foregroundStyle(.white)
-                            .padding(.trailing, 10)
+                        HStack {
+                            
+                            Text(location.city)
+                                .font(.system(size: 16, weight: .medium, design: .rounded))
+                                .foregroundStyle(.white)
+                                .padding(.leading, 10)
+                            
+                            Spacer()
+                            
+                            WeatherIconMapper.icon(for: location.weather.weather?.first?.main ?? "")
+                                .foregroundStyle(Color.white)
+                            
+                            Spacer()
+                            
+                            Text(formatTemperature(temperature: location.weather.main?.temp ?? 0.0))
+                                .font(.system(size: 16, weight: .medium, design: .rounded))
+                                .foregroundStyle(.white)
+                                .padding(.trailing, 10)
+                            
+                        }
+                        .frame(width: UIScreen.main.bounds.width - 60, height: 60)
+                        .background(Color.black.opacity(0.4))
+                        .cornerRadius(8)
+                        .padding(.horizontal, 30)
                         
                     }
-                    .frame(width: UIScreen.main.bounds.width - 60, height: 60)
-                    .background(Color.black.opacity(0.4))
-                    .cornerRadius(8)
-                    .padding(.horizontal, 30)
-                    
+                
                 }
                 
             } else {
