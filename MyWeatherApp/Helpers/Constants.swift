@@ -28,7 +28,7 @@ struct Constants {
     // MARK: - App Keys
     
     struct Keys {
-        static let openWeatherApiKey = "b93acb48084dea0784aff508ca1846fb"
+        static let openWeatherApiKey = "OPEN_WEATHER_API_KEY" // Place your own key here
     }
     
 }
